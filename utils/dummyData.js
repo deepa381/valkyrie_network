@@ -1,0 +1,286 @@
+export const dummyUser = {
+  id: '1',
+  name: 'Alex Morgan',
+  email: 'alex@valkyrie.network',
+  role: 'founder',
+  avatar: null,
+  bio: 'Serial entrepreneur with 3 exits. Passionate about AI and SaaS. Looking for technical co-founder.',
+  location: 'San Francisco, CA',
+  skills: ['Product Management', 'Business Development', 'Growth Hacking', 'AI/ML'],
+  experience: [
+    {
+      id: '1',
+      title: 'CEO & Founder',
+      company: 'TechFlow Inc',
+      duration: '2021 - Present',
+      description: 'Building next-gen AI solutions for enterprises',
+    },
+    {
+      id: '2',
+      title: 'VP Product',
+      company: 'DataSync',
+      duration: '2018 - 2021',
+      description: 'Led product strategy and grew ARR to $10M',
+    },
+  ],
+  goals: [
+    'Find technical co-founder',
+    'Raise seed round',
+    'Launch MVP in Q2',
+    'Build founding team',
+  ],
+  achievements: [
+    { id: '1', title: '3x Founder', icon: 'Trophy' },
+    { id: '2', title: 'Y Combinator Alumni', icon: 'Award' },
+    { id: '3', title: 'Top 1% Founder DNA', icon: 'Star' },
+  ],
+  founderDNA: {
+    overallScore: 92,
+    traits: [
+      { name: 'Vision', score: 95 },
+      { name: 'Execution', score: 88 },
+      { name: 'Resilience', score: 92 },
+      { name: 'Communication', score: 90 },
+      { name: 'Leadership', score: 94 },
+      { name: 'Adaptability', score: 87 },
+    ],
+    strengths: [
+      'Strategic thinking and long-term vision',
+      'Strong network in the startup ecosystem',
+      'Excellent at pitching and fundraising',
+      'Quick decision making under pressure',
+    ],
+    blindSpots: [
+      'Tendency to move too fast without validation',
+      'Can be impatient with slow progress',
+      'Sometimes overlooks operational details',
+    ],
+    leadershipStyle: 'Transformational',
+    personalityType: 'Visionary Executor',
+    stressBehavior: 'Becomes more directive and action-oriented',
+    idealCofounder: {
+      traits: ['Detail-oriented', 'Technical expert', 'Process-driven'],
+      skills: ['Engineering', 'System Architecture', 'DevOps'],
+      personality: 'Executor',
+    },
+  },
+};
+
+export const dummyMatches = [
+  {
+    id: '1',
+    name: 'Sarah Chen',
+    role: 'CTO Co-founder',
+    avatar: null,
+    matchScore: 94,
+    skills: ['Engineering', 'AI/ML', 'System Architecture'],
+    location: 'San Francisco, CA',
+    bio: 'Ex-Google engineer with 10+ years in ML. Looking to build something impactful.',
+    compatibility: {
+      technical: 95,
+      cultural: 92,
+      vision: 96,
+      workStyle: 91,
+    },
+    highlights: ['Previously worked at FAANG', '3 patents in AI', 'Y Combinator founder'],
+  },
+  {
+    id: '2',
+    name: 'Michael Rodriguez',
+    role: 'Full-Stack Engineer',
+    avatar: null,
+    matchScore: 87,
+    skills: ['Web Development', 'Mobile Development', 'DevOps'],
+    location: 'Austin, TX',
+    bio: 'Full-stack developer passionate about SaaS products. Love early-stage chaos.',
+    compatibility: {
+      technical: 90,
+      cultural: 85,
+      vision: 88,
+      workStyle: 85,
+    },
+    highlights: ['Built 2 SaaS products', 'Expert in React/Node', 'Remote work advocate'],
+  },
+  {
+    id: '3',
+    name: 'Emma Watson',
+    role: 'Product Designer',
+    avatar: null,
+    matchScore: 82,
+    skills: ['UI/UX', 'Product Design', 'Design Systems'],
+    location: 'New York, NY',
+    bio: 'Design-driven product thinker. Obsessed with user experience.',
+    compatibility: {
+      technical: 75,
+      cultural: 88,
+      vision: 85,
+      workStyle: 82,
+    },
+    highlights: ['Led design at Series B startup', 'Awwwards winner', 'Mentor at Techstars'],
+  },
+  {
+    id: '4',
+    name: 'David Kim',
+    role: 'Growth Hacker',
+    avatar: null,
+    matchScore: 78,
+    skills: ['Growth Hacking', 'Marketing', 'Data Analytics'],
+    location: 'Remote',
+    bio: 'Growth expert who scaled 3 startups to 100k+ users. Data-driven mindset.',
+    compatibility: {
+      technical: 70,
+      cultural: 82,
+      vision: 80,
+      workStyle: 80,
+    },
+    highlights: ['10x growth in previous role', 'SEO expert', 'Content marketing pro'],
+  },
+  {
+    id: '5',
+    name: 'Lisa Anderson',
+    role: 'Sales Co-founder',
+    avatar: null,
+    matchScore: 75,
+    skills: ['Sales', 'Business Development', 'Customer Success'],
+    location: 'Chicago, IL',
+    bio: 'Enterprise sales expert. Closed $50M+ in deals. Ready to build.',
+    compatibility: {
+      technical: 65,
+      cultural: 80,
+      vision: 78,
+      workStyle: 77,
+    },
+    highlights: ['Top sales performer', 'Built sales team from 0-20', 'Loves early stage'],
+  },
+];
+
+export const dummyStartups = [
+  {
+    id: '1',
+    name: 'AI Insight Pro',
+    description: 'AI-powered analytics for SaaS companies',
+    stage: 'MVP',
+    industry: 'AI/ML',
+    founded: '2024-01-15',
+    team: [
+      { id: '1', name: 'Alex Morgan', role: 'CEO', avatar: null },
+      { id: '2', name: 'Sarah Chen', role: 'CTO', avatar: null },
+    ],
+    milestones: [
+      { id: '1', title: 'Define MVP features', completed: true },
+      { id: '2', title: 'Build core product', completed: true },
+      { id: '3', title: 'Get first 10 users', completed: false },
+      { id: '4', title: 'Raise seed round', completed: false },
+    ],
+    progress: 65,
+    techStack: ['React', 'Node.js', 'PostgreSQL', 'Python', 'TensorFlow'],
+  },
+  {
+    id: '2',
+    name: 'EduLearn',
+    description: 'Personalized learning platform for professionals',
+    stage: 'Idea',
+    industry: 'EdTech',
+    founded: '2024-03-01',
+    team: [{ id: '1', name: 'Alex Morgan', role: 'Founder', avatar: null }],
+    milestones: [
+      { id: '1', title: 'Market research', completed: true },
+      { id: '2', title: 'Define target audience', completed: false },
+      { id: '3', title: 'Create wireframes', completed: false },
+      { id: '4', title: 'Find co-founder', completed: false },
+    ],
+    progress: 20,
+    techStack: [],
+  },
+];
+
+export const dummyDashboardMetrics = {
+  totalMatches: 24,
+  activeStartups: 2,
+  investorsInterested: 5,
+  mentorshipSessions: 12,
+  trend: {
+    matches: '+12%',
+    startups: '+1',
+    investors: '+2',
+    sessions: '+4',
+  },
+};
+
+export const dummyActivities = [
+  {
+    id: '1',
+    type: 'match',
+    title: 'New match with Sarah Chen',
+    description: '94% compatibility score',
+    timestamp: '2024-03-20T10:30:00',
+    icon: 'Users',
+  },
+  {
+    id: '2',
+    type: 'startup',
+    title: 'AI Insight Pro reached 65% completion',
+    description: 'MVP milestone completed',
+    timestamp: '2024-03-19T15:45:00',
+    icon: 'Rocket',
+  },
+  {
+    id: '3',
+    type: 'investor',
+    title: 'Sequoia Capital viewed your profile',
+    description: 'Interested in your startup',
+    timestamp: '2024-03-18T09:20:00',
+    icon: 'Eye',
+  },
+  {
+    id: '4',
+    type: 'message',
+    title: 'Message from Michael Rodriguez',
+    description: 'Interested in discussing collaboration',
+    timestamp: '2024-03-17T14:10:00',
+    icon: 'MessageSquare',
+  },
+];
+
+export const dummyNotifications = [
+  {
+    id: '1',
+    title: 'New match available',
+    message: 'You have a 94% match with Sarah Chen',
+    read: false,
+    timestamp: '2024-03-20T10:30:00',
+  },
+  {
+    id: '2',
+    title: 'Profile view',
+    message: 'Sequoia Capital viewed your profile',
+    read: false,
+    timestamp: '2024-03-19T15:45:00',
+  },
+  {
+    id: '3',
+    title: 'Milestone completed',
+    message: 'AI Insight Pro reached 65% completion',
+    read: true,
+    timestamp: '2024-03-18T09:20:00',
+  },
+];
+
+export const dummySettings = {
+  profile: {
+    visibility: 'public',
+    showEmail: false,
+    showLocation: true,
+  },
+  notifications: {
+    emailNotifications: true,
+    matchAlerts: true,
+    weeklyDigest: true,
+    investorAlerts: true,
+  },
+  privacy: {
+    profileVisible: true,
+    showActivity: true,
+    allowMessages: true,
+  },
+};
