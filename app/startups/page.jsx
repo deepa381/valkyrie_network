@@ -1,14 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Plus, Rocket, Users, CircleCheck as CheckCircle, Circle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Rocket, Users, CheckCircle, Circle, Calendar, Tag, ArrowRight } from 'lucide-react';
 import { MainLayout } from '@/layouts/main-layout';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -29,6 +24,22 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { useStartupStore } from '@/store/startupStore';
 import { startupService } from '@/services/startupService';
 import { INDUSTRIES, STARTUP_STAGES } from '@/utils/constants';
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({
+    opacity: 1, y: 0,
+    transition: { duration: 0.5, delay: i * 0.08, ease: [0.4, 0, 0.2, 1] }
+  }),
+};
+
+const stageConfig = {
+  Idea: { color: '#D4AF37', bg: 'rgba(212,175,55,0.12)', border: 'rgba(212,175,55,0.25)' },
+  MVP: { color: '#60A5FA', bg: 'rgba(96,165,250,0.12)', border: 'rgba(96,165,250,0.25)' },
+  Launched: { color: '#34D399', bg: 'rgba(52,211,153,0.12)', border: 'rgba(52,211,153,0.25)' },
+  Growing: { color: '#A78BFA', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.25)' },
+  Scaling: { color: '#FB7185', bg: 'rgba(251,113,133,0.12)', border: 'rgba(251,113,133,0.25)' },
+};
 
 export default function StartupsPage() {
   const { startups, setStartups, addStartup } = useStartupStore();
@@ -68,221 +79,286 @@ export default function StartupsPage() {
     }
   };
 
+  const GlassInput = ({ id, value, onChange, placeholder, required = false }) => (
+    <input
+      id={id}
+      type="text"
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      required={required}
+      className="w-full px-4 py-3 text-sm text-white placeholder:text-slate-600 rounded-xl outline-none transition-all duration-200"
+      style={{
+        background: 'rgba(255,255,255,0.05)',
+        border: '1px solid rgba(255,255,255,0.1)',
+      }}
+      onFocus={e => {
+        e.target.style.borderColor = 'rgba(212,175,55,0.4)';
+        e.target.style.boxShadow = '0 0 0 3px rgba(212,175,55,0.07)';
+      }}
+      onBlur={e => {
+        e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+        e.target.style.boxShadow = 'none';
+      }}
+    />
+  );
+
   return (
     <MainLayout>
-      <div className="p-6 lg:p-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Your Startups</h1>
-            <p className="text-zinc-400">Build and track your startup journey</p>
-          </div>
+      <div className="p-6 lg:p-8 space-y-8">
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Startup
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-bold">
-                  Create New Startup
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleCreateStartup} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Startup Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="My Awesome Startup"
-                    className="bg-black border-zinc-800 text-white"
-                    required
-                  />
-                </div>
+        {/* ─── Page Header ─── */}
+        <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Rocket className="w-5 h-5 text-[#D4AF37]" />
+                <span className="tag-gold text-xs">Your Journey</span>
+              </div>
+              <h1 className="text-2xl md:text-3xl font-black text-white mb-1">
+                Your <span className="gradient-text">Startups</span>
+              </h1>
+              <p className="text-slate-400 text-sm">Build and track your startup journey</p>
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    placeholder="What problem are you solving?"
-                    rows={3}
-                    className="bg-black border-zinc-800 text-white"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="industry">Industry</Label>
-                  <Select
-                    value={formData.industry}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, industry: value })
-                    }
-                  >
-                    <SelectTrigger className="bg-black border-zinc-800 text-white">
-                      <SelectValue placeholder="Select industry" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-zinc-800">
-                      {INDUSTRIES.map((industry) => (
-                        <SelectItem key={industry} value={industry}>
-                          {industry}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="stage">Current Stage</Label>
-                  <Select
-                    value={formData.stage}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, stage: value })
-                    }
-                  >
-                    <SelectTrigger className="bg-black border-zinc-800 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-zinc-800">
-                      {STARTUP_STAGES.map((stage) => (
-                        <SelectItem key={stage} value={stage}>
-                          {stage}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold"
-                >
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <button className="btn-gold flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold">
+                  <Plus className="w-4 h-4" />
                   Create Startup
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+                </button>
+              </DialogTrigger>
 
+              <DialogContent
+                className="border-[rgba(255,255,255,0.08)] text-white max-w-md"
+                style={{ background: '#111827' }}
+              >
+                <DialogHeader className="mb-6">
+                  <DialogTitle className="text-xl font-black text-white flex items-center gap-2">
+                    <Rocket className="w-5 h-5 text-[#D4AF37]" />
+                    Create New Startup
+                  </DialogTitle>
+                </DialogHeader>
+
+                <form onSubmit={handleCreateStartup} className="space-y-5">
+                  <div className="space-y-2">
+                    <label htmlFor="name" className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                      Startup Name
+                    </label>
+                    <GlassInput
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="My Awesome Startup"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="description" className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                      Description
+                    </label>
+                    <textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="What problem are you solving?"
+                      rows={3}
+                      required
+                      className="w-full px-4 py-3 text-sm text-white placeholder:text-slate-600 rounded-xl outline-none transition-all duration-200 resize-none"
+                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                      onFocus={e => {
+                        e.target.style.borderColor = 'rgba(212,175,55,0.4)';
+                        e.target.style.boxShadow = '0 0 0 3px rgba(212,175,55,0.07)';
+                      }}
+                      onBlur={e => {
+                        e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                        e.target.style.boxShadow = 'none';
+                      }}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold uppercase tracking-widest text-slate-500">Industry</label>
+                      <Select
+                        value={formData.industry}
+                        onValueChange={(value) => setFormData({ ...formData, industry: value })}
+                      >
+                        <SelectTrigger className="text-sm text-white rounded-xl"
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.1)' }}>
+                          {INDUSTRIES.map((i) => (
+                            <SelectItem key={i} value={i} className="text-slate-300 focus:text-white focus:bg-white/5">{i}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold uppercase tracking-widest text-slate-500">Stage</label>
+                      <Select
+                        value={formData.stage}
+                        onValueChange={(value) => setFormData({ ...formData, stage: value })}
+                      >
+                        <SelectTrigger className="text-sm text-white rounded-xl"
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.1)' }}>
+                          {STARTUP_STAGES.map((s) => (
+                            <SelectItem key={s} value={s} className="text-slate-300 focus:text-white focus:bg-white/5">{s}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <button type="submit"
+                    className="w-full btn-gold py-3 rounded-xl text-sm font-bold mt-2">
+                    Launch My Startup ✦
+                  </button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </motion.div>
+
+        {/* ─── Content ─── */}
         {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin" />
+          <div className="flex items-center justify-center py-20">
+            <div className="relative w-12 h-12">
+              <div className="absolute inset-0 rounded-full border-4 border-[rgba(212,175,55,0.15)]" />
+              <div className="absolute inset-0 rounded-full border-4 border-t-[#D4AF37] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+            </div>
           </div>
         ) : startups.length === 0 ? (
           <EmptyState
             icon="Rocket"
             title="No startups yet"
-            description="Create your first startup and start building your dream"
+            description="Create your first startup and start building your dream. The journey of a thousand miles begins with a single step."
             actionLabel="Create Startup"
             onAction={() => setIsDialogOpen(true)}
           />
         ) : (
           <div className="grid lg:grid-cols-2 gap-6">
-            {startups.map((startup, index) => (
-              <motion.div
-                key={startup.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                <Card className="p-6 bg-zinc-900 border-zinc-800 hover:border-yellow-500/50 transition-all">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-2xl font-bold text-white mb-2">
-                        {startup.name}
-                      </h3>
-                      <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20">
-                        {startup.stage}
-                      </Badge>
-                    </div>
-                    <Rocket className="w-8 h-8 text-yellow-500" />
-                  </div>
+            {startups.map((startup, index) => {
+              const sc = stageConfig[startup.stage] || stageConfig.Idea;
+              return (
+                <motion.div
+                  key={startup.id}
+                  custom={index}
+                  initial="hidden"
+                  animate="visible"
+                  variants={fadeUp}
+                  whileHover={{ y: -4 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="relative rounded-2xl p-6 h-full flex flex-col overflow-hidden transition-all duration-300 group"
+                    style={{
+                      background: 'rgba(17,24,39,0.7)',
+                      backdropFilter: 'blur(16px)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.borderColor = 'rgba(212,175,55,0.25)';
+                      e.currentTarget.style.boxShadow = '0 8px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(212,175,55,0.15)';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                      e.currentTarget.style.boxShadow = '0 4px 24px rgba(0,0,0,0.3)';
+                    }}
+                  >
+                    {/* Background corner accent */}
+                    <div className="absolute top-0 right-0 w-32 h-32 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ background: 'radial-gradient(circle at top right, rgba(212,175,55,0.06) 0%, transparent 70%)' }} />
 
-                  <p className="text-zinc-400 mb-4">{startup.description}</p>
-
-                  <div className="space-y-4 mb-6">
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-zinc-400">Progress</span>
-                        <span className="text-white font-semibold">
-                          {startup.progress}%
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-3 relative z-10">
+                      <div>
+                        <h3 className="text-xl font-black text-white mb-2">{startup.name}</h3>
+                        <span className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+                          style={{ background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>
+                          {startup.stage}
                         </span>
                       </div>
-                      <Progress value={startup.progress} className="h-2" />
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.15)' }}>
+                        <Rocket className="w-5 h-5 text-[#D4AF37]" />
+                      </div>
                     </div>
 
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Users className="w-4 h-4 text-zinc-400" />
-                        <span className="text-sm text-zinc-400">Team</span>
+                    <p className="text-sm text-slate-400 mb-5 leading-relaxed relative z-10">{startup.description}</p>
+
+                    {/* Progress Bar */}
+                    <div className="mb-5 relative z-10">
+                      <div className="flex justify-between text-xs mb-2">
+                        <span className="text-slate-500 font-medium">Progress</span>
+                        <span className="font-bold text-white">{startup.progress}%</span>
                       </div>
+                      <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                        <div className="h-full rounded-full transition-all duration-700"
+                          style={{
+                            width: `${startup.progress}%`,
+                            background: 'linear-gradient(90deg, #D4AF37, #F5C542)',
+                            boxShadow: '0 0 8px rgba(212,175,55,0.4)',
+                          }} />
+                      </div>
+                    </div>
+
+                    {/* Team Avatars */}
+                    <div className="flex items-center gap-3 mb-5 relative z-10">
                       <div className="flex -space-x-2">
                         {startup.team.map((member, idx) => (
-                          <div
-                            key={idx}
-                            className="w-8 h-8 rounded-full bg-yellow-500/20 border-2 border-zinc-900 flex items-center justify-center text-xs font-bold text-yellow-500"
-                          >
+                          <div key={idx}
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold border-2"
+                            style={{
+                              background: 'rgba(212,175,55,0.15)',
+                              color: '#F5C542',
+                              borderColor: '#0B0F19',
+                            }}>
                             {member.name[0]}
                           </div>
                         ))}
-                        <button className="w-8 h-8 rounded-full bg-zinc-800 border-2 border-zinc-900 flex items-center justify-center text-zinc-400 hover:bg-zinc-700 transition-colors">
-                          <Plus className="w-4 h-4" />
+                        <button className="w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors"
+                          style={{ background: 'rgba(255,255,255,0.05)', borderColor: '#0B0F19', color: '#64748b' }}>
+                          <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
+                      <span className="text-xs text-slate-500">{startup.team.length} team members</span>
                     </div>
-                  </div>
 
-                  <div className="border-t border-zinc-800 pt-4">
-                    <p className="text-sm text-zinc-400 mb-3">Milestones</p>
-                    <div className="space-y-2">
-                      {startup.milestones.slice(0, 3).map((milestone) => (
-                        <div
-                          key={milestone.id}
-                          className="flex items-center gap-2 text-sm"
-                        >
-                          {milestone.completed ? (
-                            <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
-                          ) : (
-                            <Circle className="w-4 h-4 text-zinc-600 flex-shrink-0" />
-                          )}
-                          <span
-                            className={
-                              milestone.completed ? 'text-zinc-400 line-through' : 'text-white'
-                            }
-                          >
-                            {milestone.title}
-                          </span>
-                        </div>
+                    {/* Milestones */}
+                    <div className="border-t border-[rgba(255,255,255,0.05)] pt-4 relative z-10">
+                      <p className="text-xs font-semibold uppercase tracking-widest text-slate-600 mb-3">Milestones</p>
+                      <div className="space-y-2">
+                        {startup.milestones.slice(0, 3).map((milestone) => (
+                          <div key={milestone.id} className="flex items-center gap-2.5">
+                            {milestone.completed
+                              ? <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                              : <Circle className="w-4 h-4 text-slate-700 flex-shrink-0" />}
+                            <span className={`text-xs ${milestone.completed ? 'text-slate-600 line-through' : 'text-slate-300'}`}>
+                              {milestone.title}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-1.5 mt-4 relative z-10">
+                      <span className="tag-glass">{startup.industry}</span>
+                      {startup.techStack?.slice(0, 2).map((tech, idx) => (
+                        <span key={idx} className="tag-glass">{tech}</span>
                       ))}
                     </div>
                   </div>
-
-                  <div className="mt-4 flex gap-2">
-                    <Badge variant="secondary" className="bg-zinc-800 text-zinc-300">
-                      {startup.industry}
-                    </Badge>
-                    {startup.techStack?.slice(0, 2).map((tech, idx) => (
-                      <Badge
-                        key={idx}
-                        variant="secondary"
-                        className="bg-zinc-800 text-zinc-300"
-                      >
-                        {tech}
-                      </Badge>
-                    ))}
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>

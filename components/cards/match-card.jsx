@@ -1,82 +1,133 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { MapPin, Sparkles } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { MapPin, Sparkles, Eye, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ProgressCircle } from '@/components/ui/progress-circle';
 import { getInitials } from '@/utils/helpers';
 
 export function MatchCard({ match, onConnect, onViewProfile, className = '' }) {
+  const scoreColor =
+    match.matchScore >= 90 ? '#34D399' :
+    match.matchScore >= 75 ? '#60A5FA' :
+    match.matchScore >= 60 ? '#D4AF37' :
+    '#F97316';
+
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+      whileHover={{ y: -6, transition: { duration: 0.2 } }}
+      className={`group ${className}`}
     >
-      <Card className={`p-6 bg-zinc-900 border-zinc-800 hover:border-yellow-500/50 transition-all ${className}`}>
-        <div className="flex items-start gap-4">
-          <Avatar className="w-16 h-16 border-2 border-yellow-500">
-            <AvatarFallback className="bg-yellow-500/20 text-yellow-500 text-lg font-bold">
+      <div className="relative rounded-2xl p-5 h-full flex flex-col overflow-hidden transition-all duration-300"
+        style={{
+          background: 'rgba(17,24,39,0.7)',
+          backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+        }}
+      >
+        {/* Hover border glow */}
+        <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+          style={{ boxShadow: 'inset 0 0 0 1px rgba(212,175,55,0.3)' }} />
+
+        {/* Background corner gradient */}
+        <div className="absolute top-0 right-0 w-32 h-32 opacity-30 pointer-events-none"
+          style={{ background: 'radial-gradient(circle at top right, rgba(212,175,55,0.08) 0%, transparent 70%)' }} />
+
+        {/* Header: Avatar + Score + Info */}
+        <div className="flex items-start gap-4 mb-4 relative z-10">
+          {/* Avatar with match score badge */}
+          <div className="relative flex-shrink-0">
+            <div className="w-14 h-14 rounded-2xl border-2 flex items-center justify-center text-lg font-black"
+              style={{
+                borderColor: 'rgba(212,175,55,0.4)',
+                background: 'rgba(212,175,55,0.1)',
+                color: '#F5C542',
+              }}>
               {getInitials(match.name)}
-            </AvatarFallback>
-          </Avatar>
+            </div>
+            {/* Online dot */}
+            <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-[#111827]" />
+          </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-4 mb-2">
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-white mb-1">{match.name}</h3>
-                <p className="text-sm text-yellow-500 mb-2">{match.role}</p>
+            <h3 className="font-bold text-white text-base leading-tight mb-0.5 truncate">{match.name}</h3>
+            <p className="text-sm font-medium mb-1" style={{ color: '#D4AF37' }}>{match.role}</p>
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <MapPin className="w-3 h-3" />
+              <span className="truncate">{match.location}</span>
+            </div>
+          </div>
+
+          {/* Match Score Badge */}
+          <div className="flex-shrink-0 flex flex-col items-center">
+            <div className="relative w-16 h-16">
+              {/* SVG Circle */}
+              <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                <circle
+                  cx="32" cy="32" r="26"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.06)"
+                  strokeWidth="4"
+                />
+                <circle
+                  cx="32" cy="32" r="26"
+                  fill="none"
+                  stroke={scoreColor}
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 26}`}
+                  strokeDashoffset={`${2 * Math.PI * 26 * (1 - match.matchScore / 100)}`}
+                  style={{ transition: 'stroke-dashoffset 1s ease', filter: `drop-shadow(0 0 4px ${scoreColor}60)` }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-sm font-black text-white leading-none">{match.matchScore}%</span>
+                <span className="text-[8px] text-slate-500 leading-none mt-0.5">match</span>
               </div>
-              <ProgressCircle value={match.matchScore} size={80} strokeWidth={6} />
-            </div>
-
-            <p className="text-sm text-zinc-400 mb-3 line-clamp-2">{match.bio}</p>
-
-            <div className="flex items-center gap-2 mb-3 text-sm text-zinc-500">
-              <MapPin className="w-4 h-4" />
-              <span>{match.location}</span>
-            </div>
-
-            <div className="flex flex-wrap gap-2 mb-4">
-              {match.skills.slice(0, 3).map((skill, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                >
-                  {skill}
-                </Badge>
-              ))}
-              {match.skills.length > 3 && (
-                <Badge variant="secondary" className="bg-zinc-800 text-zinc-400">
-                  +{match.skills.length - 3}
-                </Badge>
-              )}
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                onClick={() => onConnect(match)}
-                className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Connect
-              </Button>
-              <Button
-                onClick={() => onViewProfile(match)}
-                variant="outline"
-                className="flex-1 border-zinc-700 text-white hover:bg-zinc-800"
-              >
-                View Profile
-              </Button>
             </div>
           </div>
         </div>
-      </Card>
+
+        {/* Bio */}
+        <p className="text-sm text-slate-400 leading-relaxed mb-4 line-clamp-2 relative z-10">
+          {match.bio}
+        </p>
+
+        {/* Skills */}
+        <div className="flex flex-wrap gap-1.5 mb-5 relative z-10">
+          {match.skills.slice(0, 3).map((skill, index) => (
+            <span key={index} className="tag-glass text-xs">
+              {skill}
+            </span>
+          ))}
+          {match.skills.length > 3 && (
+            <span className="tag-glass text-xs">
+              +{match.skills.length - 3}
+            </span>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2 mt-auto relative z-10">
+          <button
+            onClick={() => onConnect(match)}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 btn-gold"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Connect
+          </button>
+          <button
+            onClick={() => onViewProfile(match)}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 btn-outline-glass"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            Profile
+          </button>
+        </div>
+      </div>
     </motion.div>
   );
 }

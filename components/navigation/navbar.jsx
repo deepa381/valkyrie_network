@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Menu, Search, Bell, Settings, LogOut } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Menu, Search, Bell, Settings, LogOut, User } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +19,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useAuthStore } from '@/store/authStore';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { getInitials, formatDate } from '@/utils/helpers';
@@ -30,6 +31,7 @@ export function Navbar({ onMenuClick }) {
   const { notifications, unreadCount, markNotificationRead, markAllNotificationsRead } =
     useDashboardStore();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -37,87 +39,108 @@ export function Navbar({ onMenuClick }) {
   };
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-black/95 backdrop-blur-sm border-b border-zinc-800">
+    <header className="sticky top-0 z-30 h-16 glass-nav">
+      {/* Bottom glow line */}
+      <div className="absolute bottom-0 left-0 right-0 h-px"
+        style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(212,175,55,0.15) 30%, rgba(212,175,55,0.15) 70%, transparent 100%)' }} />
+
       <div className="flex items-center justify-between h-full px-4 lg:px-6">
+        {/* Left: Menu + Search */}
         <div className="flex items-center gap-4 flex-1">
-          <Button
-            variant="ghost"
-            size="icon"
+          <button
             onClick={onMenuClick}
-            className="lg:hidden text-zinc-400 hover:text-white"
+            className="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-200"
           >
             <Menu className="w-5 h-5" />
-          </Button>
+          </button>
 
-          <div className="relative flex-1 max-w-md hidden md:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-            <Input
+          <div className="relative flex-1 max-w-sm hidden md:block">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+            <input
               type="search"
-              placeholder="Search..."
+              placeholder="Search founders, startups..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-500 focus:border-yellow-500"
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              className="w-full pl-10 pr-4 py-2 text-sm text-white placeholder:text-slate-600 rounded-lg outline-none transition-all duration-300"
+              style={{
+                background: searchFocused ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.04)',
+                border: searchFocused
+                  ? '1px solid rgba(212,175,55,0.35)'
+                  : '1px solid rgba(255,255,255,0.08)',
+                boxShadow: searchFocused ? '0 0 0 3px rgba(212,175,55,0.07)' : 'none',
+              }}
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2">
+          {/* Notifications */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative text-zinc-400 hover:text-white"
-              >
-                <Bell className="w-5 h-5" />
+              <button className="relative w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-200"
+                style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+                <Bell className="w-4.5 h-4.5" />
                 {unreadCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs">
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1 -right-1 w-4.5 h-4.5 rounded-full flex items-center justify-center text-[10px] font-bold text-[#0B0F19]"
+                    style={{ background: 'linear-gradient(135deg, #D4AF37, #F5C542)', minWidth: '18px', minHeight: '18px', padding: '1px' }}
+                  >
                     {unreadCount}
-                  </Badge>
+                  </motion.span>
                 )}
-              </Button>
+              </button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0 bg-zinc-900 border-zinc-800" align="end">
-              <div className="flex items-center justify-between p-4 border-b border-zinc-800">
-                <h3 className="font-semibold text-white">Notifications</h3>
+            <PopoverContent
+              className="w-80 p-0 border-[rgba(255,255,255,0.08)] shadow-card"
+              style={{ background: '#111827' }}
+              align="end"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.06)]">
+                <h3 className="font-semibold text-white text-sm">Notifications</h3>
                 {unreadCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <button
                     onClick={markAllNotificationsRead}
-                    className="text-xs text-yellow-500 hover:text-yellow-400"
+                    className="text-xs text-[#D4AF37] hover:text-[#F5C542] transition-colors font-medium"
                   >
                     Mark all read
-                  </Button>
+                  </button>
                 )}
               </div>
-              <div className="max-h-96 overflow-y-auto">
+              <div className="max-h-80 overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <div className="p-8 text-center text-zinc-500">
-                    No notifications
-                  </div>
+                  <EmptyState
+                    size="compact"
+                    icon="Bell"
+                    title="No notifications"
+                    description="You are all caught up. New alerts will appear here."
+                  />
                 ) : (
-                  <div className="divide-y divide-zinc-800">
+                  <div className="divide-y divide-[rgba(255,255,255,0.04)]">
                     {notifications.map((notification) => (
                       <div
                         key={notification.id}
                         onClick={() => markNotificationRead(notification.id)}
-                        className={`p-4 hover:bg-zinc-800/50 cursor-pointer transition-colors ${
-                          !notification.read ? 'bg-zinc-800/30' : ''
-                        }`}
+                        className="p-4 cursor-pointer transition-colors hover:bg-white/[0.03]"
+                        style={{ background: !notification.read ? 'rgba(212,175,55,0.03)' : 'transparent' }}
                       >
-                        <div className="flex items-start gap-2">
+                        <div className="flex items-start gap-3">
                           {!notification.read && (
-                            <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0" />
+                            <div className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0"
+                              style={{ background: 'linear-gradient(135deg, #D4AF37, #F5C542)' }} />
                           )}
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-white mb-1">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-white mb-0.5 leading-tight">
                               {notification.title}
                             </p>
-                            <p className="text-xs text-zinc-400 mb-1">
+                            <p className="text-xs text-slate-400 mb-1 leading-relaxed">
                               {notification.message}
                             </p>
-                            <p className="text-xs text-zinc-600">
+                            <p className="text-xs text-slate-600">
                               {formatDate(notification.timestamp)}
                             </p>
                           </div>
@@ -130,43 +153,61 @@ export function Navbar({ onMenuClick }) {
             </PopoverContent>
           </Popover>
 
+          {/* Avatar Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                <Avatar className="h-10 w-10 border-2 border-yellow-500">
-                  <AvatarFallback className="bg-yellow-500/20 text-yellow-500 font-bold">
+              <button className="relative ml-1 rounded-full transition-all duration-200 hover:ring-2 hover:ring-[rgba(212,175,55,0.4)]">
+                <Avatar className="h-9 w-9 border-2 border-[rgba(212,175,55,0.35)]">
+                  <AvatarFallback
+                    className="text-sm font-bold"
+                    style={{ background: 'rgba(212,175,55,0.15)', color: '#F5C542' }}>
                     {getInitials(user?.name || 'User')}
                   </AvatarFallback>
                 </Avatar>
-              </Button>
+                {/* Online status dot */}
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#0B0F19]" />
+              </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-zinc-900 border-zinc-800" align="end">
-              <DropdownMenuLabel className="text-white">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{user?.name || 'User'}</p>
-                  <p className="text-xs text-zinc-400">{user?.email}</p>
+            <DropdownMenuContent
+              className="w-56 border-[rgba(255,255,255,0.08)] shadow-card"
+              style={{ background: '#111827' }}
+              align="end"
+            >
+              <DropdownMenuLabel className="text-white px-3 py-3">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-8 w-8 border border-[rgba(212,175,55,0.3)]">
+                    <AvatarFallback className="text-xs font-bold"
+                      style={{ background: 'rgba(212,175,55,0.15)', color: '#F5C542' }}>
+                      {getInitials(user?.name || 'User')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-semibold">{user?.name || 'User'}</p>
+                    <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+                  </div>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-zinc-800" />
+              <DropdownMenuSeparator className="bg-[rgba(255,255,255,0.06)]" />
               <DropdownMenuItem
                 onClick={() => router.push('/profile')}
-                className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer"
+                className="text-slate-300 focus:text-white focus:bg-white/5 cursor-pointer mx-1 rounded-lg my-0.5"
               >
+                <User className="mr-2.5 h-4 w-4 text-slate-400" />
                 Profile
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push('/settings')}
-                className="text-zinc-300 focus:text-white focus:bg-zinc-800 cursor-pointer"
+                className="text-slate-300 focus:text-white focus:bg-white/5 cursor-pointer mx-1 rounded-lg my-0.5"
               >
-                <Settings className="mr-2 h-4 w-4" />
+                <Settings className="mr-2.5 h-4 w-4 text-slate-400" />
                 Settings
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-zinc-800" />
+              <DropdownMenuSeparator className="bg-[rgba(255,255,255,0.06)]" />
               <DropdownMenuItem
                 onClick={handleLogout}
-                className="text-red-400 focus:text-red-300 focus:bg-zinc-800 cursor-pointer"
+                className="text-red-400 focus:text-red-300 focus:bg-red-500/10 cursor-pointer mx-1 rounded-lg my-0.5"
               >
-                <LogOut className="mr-2 h-4 w-4" />
+                <LogOut className="mr-2.5 h-4 w-4" />
                 Log out
               </DropdownMenuItem>
             </DropdownMenuContent>
