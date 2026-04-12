@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView, type Variants } from 'framer-motion';
 import Link from 'next/link';
 import { useRef, useEffect, useState } from 'react';
 import {
@@ -12,34 +12,51 @@ import {
 } from 'lucide-react';
 
 /* ─── Animated Counter ─── */
-function AnimatedCounter({ target, suffix = '', duration = 2000 }) {
+type AnimatedCounterProps = {
+  target: number;
+  suffix?: string;
+  duration?: number;
+};
+
+function AnimatedCounter({ target, suffix = '', duration = 2000 }: AnimatedCounterProps) {
   const [count, setCount] = useState(0);
-  const ref = useRef(null);
+  const ref = useRef<HTMLSpanElement | null>(null);
   const inView = useInView(ref, { once: true });
 
   useEffect(() => {
     if (!inView) return;
+
     let startTime: number | null = null;
+
     const animate = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
+
       const progress = Math.min((timestamp - startTime) / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
+
       setCount(Math.floor(eased * target));
+
       if (progress < 1) requestAnimationFrame(animate);
     };
+
     requestAnimationFrame(animate);
   }, [inView, target, duration]);
 
-  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
+  return (
+    <span ref={ref}>
+      {count.toLocaleString()}
+      {suffix}
+    </span>
+  );
 }
 
 /* ─── Section Fade In ─── */
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 32 },
   visible: (i: number = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.65, delay: i * 0.1, ease: [0.4, 0, 0.2, 1] },
+    transition: { duration: 0.65, delay: i * 0.1, ease: [0.4, 0, 0.2, 1] as const },
   }),
 };
 
