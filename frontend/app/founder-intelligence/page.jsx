@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Brain, TrendingUp, TriangleAlert as AlertTriangle, Target, Users, Zap, Award } from 'lucide-react';
 import { MainLayout } from '@/layouts/main-layout';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { GlassCard } from '@/components/ui/glass-card';
 import { EmptyState } from '@/components/ui/empty-state';
