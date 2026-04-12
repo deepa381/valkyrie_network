@@ -44,6 +44,7 @@ const stageConfig = {
 export default function StartupsPage() {
   const { startups, setStartups, addStartup } = useStartupStore();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -52,30 +53,33 @@ export default function StartupsPage() {
     stage: 'Idea',
   });
 
+  const loadStartups = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await startupService.getStartups();
+      setStartups(data);
+    } catch (err) {
+      setError(err.message || 'Failed to load startups');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadStartups = async () => {
-      try {
-        setLoading(true);
-        const data = await startupService.getStartups();
-        setStartups(data);
-      } catch (error) {
-        console.error('Failed to load startups:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadStartups();
   }, [setStartups]);
 
   const handleCreateStartup = async (e) => {
     e.preventDefault();
     try {
+      setError('');
       const newStartup = await startupService.createStartup(formData);
       addStartup(newStartup);
       setIsDialogOpen(false);
       setFormData({ name: '', description: '', industry: '', stage: 'Idea' });
     } catch (error) {
-      console.error('Failed to create startup:', error);
+      setError(error.message || 'Failed to create startup');
     }
   };
 
@@ -234,6 +238,14 @@ export default function StartupsPage() {
               <div className="absolute inset-0 rounded-full border-4 border-t-[#D4AF37] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
             </div>
           </div>
+        ) : error ? (
+          <EmptyState
+            icon="TriangleAlert"
+            title="Could not load startups"
+            description={error}
+            actionLabel="Retry"
+            onAction={loadStartups}
+          />
         ) : startups.length === 0 ? (
           <EmptyState
             icon="Rocket"

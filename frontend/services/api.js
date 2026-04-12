@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.valkyrie.network';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -44,3 +44,9 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+export function getApiErrorMessage(error, fallbackMessage = 'Request failed') {
+  if (error?.response?.data?.message) return error.response.data.message;
+  if (error?.message) return error.message;
+  return fallbackMessage;
+}

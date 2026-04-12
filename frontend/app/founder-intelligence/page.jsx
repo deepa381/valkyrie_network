@@ -1,12 +1,14 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Brain, TrendingUp, TriangleAlert as AlertTriangle, Target, Users, Zap, Award } from 'lucide-react';
 import { MainLayout } from '@/layouts/main-layout';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { GlassCard } from '@/components/ui/glass-card';
-import { dummyUser } from '@/utils/dummyData';
+import { EmptyState } from '@/components/ui/empty-state';
+import { profileService } from '@/services/profileService';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -27,7 +29,55 @@ const CardHeader = ({ icon: Icon, title, color = '#D4AF37' }) => (
 );
 
 export default function FounderIntelligencePage() {
-  const { founderDNA } = dummyUser;
+  const [founderDNA, setFounderDNA] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const loadDna = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await profileService.getFounderDna();
+      setFounderDNA(response);
+    } catch (err) {
+      setError(err.message || 'Failed to load founder intelligence');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDna();
+  }, []);
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="p-6 lg:p-8 flex items-center justify-center min-h-[60vh]">
+          <div className="relative w-12 h-12">
+            <div className="absolute inset-0 rounded-full border-4 border-[rgba(212,175,55,0.15)]" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-[#D4AF37] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error || !founderDNA) {
+    return (
+      <MainLayout>
+        <div className="p-6 lg:p-8">
+          <EmptyState
+            icon="TriangleAlert"
+            title="Founder intelligence unavailable"
+            description={error || 'No founder DNA data returned by backend.'}
+            actionLabel="Try Again"
+            onAction={loadDna}
+          />
+        </div>
+      </MainLayout>
+    );
+  }
 
   const traitColors = ['#D4AF37', '#60A5FA', '#34D399', '#F97316', '#A78BFA', '#FB7185'];
 

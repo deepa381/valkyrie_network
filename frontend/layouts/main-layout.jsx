@@ -1,14 +1,40 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/navigation/sidebar';
 import { Navbar } from '@/components/navigation/navbar';
+import { useAuthStore } from '@/store/authStore';
 
 export function MainLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [checkedAuth, setCheckedAuth] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { isAuthenticated, token } = useAuthStore();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let persistedToken = null;
+    try {
+      const authStorage = localStorage.getItem('auth-storage');
+      persistedToken = authStorage ? JSON.parse(authStorage)?.state?.token : null;
+    } catch (_error) {
+      persistedToken = null;
+    }
+
+    if (!isAuthenticated && !token && !persistedToken) {
+      router.replace('/auth/login');
+    }
+
+    setCheckedAuth(true);
+  }, [isAuthenticated, token, router]);
+
+  if (!checkedAuth) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen" style={{ background: '#0B0F19' }}>

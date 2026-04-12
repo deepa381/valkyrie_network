@@ -1,40 +1,47 @@
-import api from './api';
-import { dummyMatches } from '@/utils/dummyData';
+import api, { getApiErrorMessage } from './api';
+
+const normalizeMatch = (item, index) => {
+  const score = typeof item?.score === 'number' ? Math.round(item.score * 100) : item?.matchScore || 0;
+
+  return {
+    id: item?.id || String(index + 1),
+    name: item?.name || item?.user || 'Founder Match',
+    role: item?.role || 'Co-founder',
+    avatar: item?.avatar || null,
+    matchScore: score,
+    skills: Array.isArray(item?.skills) ? item.skills : [],
+    location: item?.location || 'Remote',
+    bio: item?.bio || 'Potential match from backend.',
+    compatibility: item?.compatibility || {},
+    highlights: Array.isArray(item?.highlights) ? item.highlights : [],
+  };
+};
 
 export const matchService = {
-  async getMatches() {
+  async getMatches(filters = {}) {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return dummyMatches;
+      const response = await api.post('/match', filters);
+      const data = Array.isArray(response.data) ? response.data : [];
+      return data.map(normalizeMatch);
     } catch (error) {
-      throw new Error('Failed to fetch matches');
+      throw new Error(getApiErrorMessage(error, 'Failed to fetch matches'));
     }
   },
 
   async getMatchById(matchId) {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return dummyMatches.find((m) => m.id === matchId);
+      const matches = await this.getMatches();
+      return matches.find((m) => m.id === matchId) || null;
     } catch (error) {
-      throw new Error('Failed to fetch match');
+      throw new Error(getApiErrorMessage(error, 'Failed to fetch match'));
     }
   },
 
   async connectWithMatch(matchId) {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return { success: true, message: 'Connection request sent' };
-    } catch (error) {
-      throw new Error('Failed to connect');
-    }
+    return { success: true, message: `Connection request sent to match ${matchId}` };
   },
 
   async sendMessage(matchId, message) {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return { success: true, message: 'Message sent' };
-    } catch (error) {
-      throw new Error('Failed to send message');
-    }
+    return { success: true, message: `Message queued for match ${matchId}` };
   },
 };

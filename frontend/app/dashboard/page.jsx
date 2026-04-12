@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Rocket, Users, TrendingUp, ArrowRight, Sparkles, CheckCircle, Circle } from 'lucide-react';
 import * as Icons from 'lucide-react';
@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { GlassCard } from '@/components/ui/glass-card';
 import { MetricCardSkeleton } from '@/components/ui/skeleton-loader';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { dashboardService } from '@/services/dashboardService';
 import { useAuthStore } from '@/store/authStore';
@@ -27,11 +28,14 @@ const fadeUp = {
 export default function DashboardPage() {
   const { metrics, activities, setMetrics, setActivities } = useDashboardStore();
   const { user } = useAuthStore();
-  const loading = false;
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
+        setLoading(true);
+        setError('');
         const [metricsData, activitiesData] = await Promise.all([
           dashboardService.getMetrics(),
           dashboardService.getActivities(),
@@ -39,7 +43,9 @@ export default function DashboardPage() {
         setMetrics(metricsData);
         setActivities(activitiesData);
       } catch (error) {
-        console.error('Failed to load dashboard data:', error);
+        setError(error.message || 'Failed to load dashboard data');
+      } finally {
+        setLoading(false);
       }
     };
     loadDashboardData();
@@ -114,6 +120,15 @@ export default function DashboardPage() {
           )}
         </div>
 
+        {error && (
+          <EmptyState
+            size="compact"
+            icon="TriangleAlert"
+            title="Dashboard data unavailable"
+            description={error}
+          />
+        )}
+
         {/* ─── Activity + Quick Actions ─── */}
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Recent Activity */}
@@ -127,7 +142,14 @@ export default function DashboardPage() {
               </div>
 
               <div className="space-y-3">
-                {activities.map((activity, i) => {
+                {activities.length === 0 ? (
+                  <EmptyState
+                    size="compact"
+                    icon="Inbox"
+                    title="No activity yet"
+                    description="Recent activity will appear here as your startup and matching data updates."
+                  />
+                ) : activities.map((activity, i) => {
                   const Icon = Icons[activity.icon] || Icons.Circle;
                   return (
                     <motion.div

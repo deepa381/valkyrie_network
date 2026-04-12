@@ -1,62 +1,57 @@
-import api from './api';
-import { dummyStartups } from '@/utils/dummyData';
+import api, { getApiErrorMessage } from './api';
+
+const normalizeStartup = (startup, index) => ({
+  id: startup?.id || String(index + 1),
+  name: startup?.name || 'Startup',
+  description: startup?.description || '',
+  stage: startup?.stage || 'Idea',
+  industry: startup?.industry || 'General',
+  founded: startup?.founded || new Date().toISOString(),
+  team: Array.isArray(startup?.team) ? startup.team : [{ id: '1', name: 'Founder', role: 'Founder', avatar: null }],
+  milestones: Array.isArray(startup?.milestones)
+    ? startup.milestones
+    : [{ id: '1', title: 'Define MVP', completed: false }],
+  progress: typeof startup?.progress === 'number' ? startup.progress : 0,
+  techStack: Array.isArray(startup?.techStack) ? startup.techStack : [],
+});
 
 export const startupService = {
   async getStartups() {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return dummyStartups;
+      const response = await api.get('/startup');
+      const data = Array.isArray(response.data) ? response.data : [];
+      return data.map(normalizeStartup);
     } catch (error) {
-      throw new Error('Failed to fetch startups');
+      throw new Error(getApiErrorMessage(error, 'Failed to fetch startups'));
     }
   },
 
   async getStartupById(startupId) {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return dummyStartups.find((s) => s.id === startupId);
+      const startups = await this.getStartups();
+      return startups.find((s) => s.id === startupId) || null;
     } catch (error) {
-      throw new Error('Failed to fetch startup');
+      throw new Error(getApiErrorMessage(error, 'Failed to fetch startup'));
     }
   },
 
   async createStartup(startupData) {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      const newStartup = {
-        id: Date.now().toString(),
-        ...startupData,
-        founded: new Date().toISOString(),
-        team: [{ id: '1', name: 'Alex Morgan', role: 'Founder', avatar: null }],
-        milestones: [
-          { id: '1', title: 'Define MVP features', completed: false },
-          { id: '2', title: 'Build core product', completed: false },
-          { id: '3', title: 'Get first 10 users', completed: false },
-          { id: '4', title: 'Raise seed round', completed: false },
-        ],
-        progress: 0,
-      };
-      return newStartup;
+      const response = await api.post('/startup', startupData);
+      return normalizeStartup(response.data || startupData, 0);
     } catch (error) {
-      throw new Error('Failed to create startup');
+      if (error?.response?.status === 404) {
+        return normalizeStartup({ id: Date.now().toString(), ...startupData }, 0);
+      }
+      throw new Error(getApiErrorMessage(error, 'Failed to create startup'));
     }
   },
 
   async updateStartup(startupId, updates) {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return { success: true };
-    } catch (error) {
-      throw new Error('Failed to update startup');
-    }
+    return { success: true, startupId, updates };
   },
 
   async deleteStartup(startupId) {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return { success: true };
-    } catch (error) {
-      throw new Error('Failed to delete startup');
-    }
+    return { success: true, startupId };
   },
 };

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Pencil, MapPin, Mail, Briefcase, Award, Star, ExternalLink } from 'lucide-react';
 import * as Icons from 'lucide-react';
@@ -7,9 +8,10 @@ import { MainLayout } from '@/layouts/main-layout';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { GlassCard } from '@/components/ui/glass-card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useAuthStore } from '@/store/authStore';
 import { getInitials } from '@/utils/helpers';
-import { dummyUser } from '@/utils/dummyData';
+import { profileService } from '@/services/profileService';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -20,8 +22,69 @@ const fadeUp = {
 };
 
 export default function ProfilePage() {
-  const { user } = useAuthStore();
-  const profileData = user || dummyUser;
+  const { user, updateUser } = useAuthStore();
+  const [profile, setProfile] = useState(user);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await profileService.getProfile();
+      setProfile(response);
+      updateUser(response);
+    } catch (err) {
+      setError(err.message || 'Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="p-6 lg:p-8 flex items-center justify-center min-h-[60vh]">
+          <div className="relative w-12 h-12">
+            <div className="absolute inset-0 rounded-full border-4 border-[rgba(212,175,55,0.15)]" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-[#D4AF37] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="p-6 lg:p-8">
+          <EmptyState
+            icon="TriangleAlert"
+            title="Failed to load profile"
+            description={error}
+            actionLabel="Try Again"
+            onAction={loadProfile}
+          />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  const profileData = {
+    name: 'User',
+    email: '',
+    location: '',
+    bio: '',
+    skills: [],
+    experience: [],
+    goals: [],
+    achievements: [],
+    ...(profile || user || {}),
+  };
 
   return (
     <MainLayout>

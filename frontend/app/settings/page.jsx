@@ -9,10 +9,28 @@ import { GlassInput } from '@/components/ui/glass-input';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { GlassCard } from '@/components/ui/glass-card';
-import { dummySettings } from '@/utils/dummyData';
+
+const defaultSettings = {
+  profile: {
+    visibility: 'public',
+    showEmail: false,
+    showLocation: true,
+  },
+  notifications: {
+    emailNotifications: true,
+    matchAlerts: true,
+    weeklyDigest: true,
+    investorAlerts: true,
+  },
+  privacy: {
+    profileVisible: true,
+    showActivity: true,
+    allowMessages: true,
+  },
+};
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState(dummySettings);
+  const [settings, setSettings] = useState(defaultSettings);
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {

@@ -39,21 +39,24 @@ export default function MatchingPage() {
   } = useMatchStore();
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
 
+  const loadMatches = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const matches = await matchService.getMatches();
+      setMatches(matches);
+    } catch (error) {
+      setError(error.message || 'Failed to load matches');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadMatches = async () => {
-      try {
-        setLoading(true);
-        const matches = await matchService.getMatches();
-        setMatches(matches);
-      } catch (error) {
-        console.error('Failed to load matches:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadMatches();
   }, [setMatches]);
 
@@ -240,6 +243,14 @@ export default function MatchingPage() {
           <div className="grid md:grid-cols-2 gap-5">
             {Array(4).fill(0).map((_, i) => <MatchCardSkeleton key={i} />)}
           </div>
+        ) : error ? (
+          <EmptyState
+            icon="TriangleAlert"
+            title="Could not load matches"
+            description={error}
+            actionLabel="Retry"
+            onAction={loadMatches}
+          />
         ) : filteredMatches.length === 0 ? (
           <EmptyState
             icon="Users"
