@@ -2,13 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Brain, TrendingUp, TriangleAlert as AlertTriangle, Target, Users, Zap, Award } from 'lucide-react';
+import { Brain, TrendingUp, TriangleAlert as AlertTriangle, Target, Users, Award } from 'lucide-react';
 import { MainLayout } from '@/layouts/main-layout';
-import { Badge } from '@/components/ui/badge';
 import { GlassCard } from '@/components/ui/glass-card';
-import { EmptyState } from '@/components/ui/empty-state';
-import { profileService } from '@/services/profileService';
-
+import { intelligenceService } from '@/services/intelligenceService';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -22,7 +19,7 @@ const CardHeader = ({ icon: Icon, title, color = '#D4AF37' }) => (
   <div className="flex items-center gap-3 mb-6">
     <div className="w-9 h-9 rounded-xl flex items-center justify-center"
       style={{ background: `${color}15`, border: `1px solid ${color}25` }}>
-      <Icon className="w-4.5 h-4.5" style={{ color }} />
+      <Icon className="w-4 h-4" style={{ color }} />
     </div>
     <h2 className="text-base font-bold text-white">{title}</h2>
   </div>
@@ -37,7 +34,7 @@ export default function FounderIntelligencePage() {
     try {
       setLoading(true);
       setError('');
-      const response = await profileService.getFounderDna();
+      const response = await intelligenceService.getDna();
       setFounderDNA(response);
     } catch (err) {
       setError(err.message || 'Failed to load founder intelligence');
@@ -50,36 +47,23 @@ export default function FounderIntelligencePage() {
     loadDna();
   }, []);
 
-  if (loading) {
-    return (
-      <MainLayout>
-        <div className="p-6 lg:p-8 flex items-center justify-center min-h-[60vh]">
-          <div className="relative w-12 h-12">
-            <div className="absolute inset-0 rounded-full border-4 border-[rgba(212,175,55,0.15)]" />
-            <div className="absolute inset-0 rounded-full border-4 border-t-[#D4AF37] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  if (error || !founderDNA) {
-    return (
-      <MainLayout>
-        <div className="p-6 lg:p-8">
-          <EmptyState
-            icon="TriangleAlert"
-            title="Founder intelligence unavailable"
-            description={error || 'No founder DNA data returned by backend.'}
-            actionLabel="Try Again"
-            onAction={loadDna}
-          />
-        </div>
-      </MainLayout>
-    );
-  }
-
   const traitColors = ['#D4AF37', '#60A5FA', '#34D399', '#F97316', '#A78BFA', '#FB7185'];
+
+  // Always render the page shell — use fallback DNA if needed
+  const dna = founderDNA || {
+    overallScore: 0,
+    personalityType: 'Loading...',
+    leadershipStyle: 'Loading...',
+    stressBehavior: 'Loading...',
+    traits: [
+      { name: 'Vision', score: 0 }, { name: 'Execution', score: 0 },
+      { name: 'Resilience', score: 0 }, { name: 'Communication', score: 0 },
+      { name: 'Leadership', score: 0 }, { name: 'Adaptability', score: 0 },
+    ],
+    strengths: ['Loading insights...'],
+    blindSpots: ['Loading insights...'],
+    idealCofounder: { traits: [], skills: [], personality: 'Loading...' },
+  };
 
   return (
     <MainLayout>
@@ -89,13 +73,26 @@ export default function FounderIntelligencePage() {
         <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <div className="flex items-center gap-2 mb-2">
             <Brain className="w-5 h-5 text-[#D4AF37]" />
-            <span className="tag-gold text-xs">AI + Psychology</span>
+            <span className="text-xs font-semibold px-2 py-1 rounded-lg"
+              style={{ background: 'rgba(212,175,55,0.1)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.2)' }}>
+              AI + Psychology
+            </span>
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-white mb-1">
-            Founder <span className="gradient-text">Intelligence</span>
+            Founder <span style={{ background: 'linear-gradient(90deg,#D4AF37,#F5C542)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Intelligence</span>
           </h1>
           <p className="text-slate-400 text-sm">Understand your founder DNA and unlock your full potential</p>
         </motion.div>
+
+        {/* Error banner (non-blocking) */}
+        {error && (
+          <div className="flex items-center gap-3 p-4 rounded-xl"
+            style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.2)' }}>
+            <AlertTriangle className="w-4 h-4 text-orange-400 flex-shrink-0" />
+            <p className="text-sm text-orange-300">{error} — showing default profile</p>
+            <button onClick={loadDna} className="ml-auto text-xs text-orange-400 hover:text-orange-300 font-semibold">Retry</button>
+          </div>
+        )}
 
         {/* ─── DNA Score Hero ─── */}
         <motion.div custom={0} initial="hidden" animate="visible" variants={fadeUp}>
@@ -104,19 +101,15 @@ export default function FounderIntelligencePage() {
               background: 'linear-gradient(135deg, rgba(17,24,39,0.95) 0%, rgba(20,30,46,0.9) 100%)',
               border: '1px solid rgba(212,175,55,0.25)',
             }}>
-            {/* Background glow */}
             <div className="absolute inset-0"
               style={{ background: 'radial-gradient(ellipse 70% 100% at 0% 50%, rgba(212,175,55,0.08) 0%, transparent 60%)' }} />
-            <div className="absolute inset-0 dot-grid opacity-30" style={{ backgroundSize: '22px 22px' }} />
 
             <div className="relative flex flex-col md:flex-row items-center gap-10">
               {/* Score Ring */}
               <div className="relative flex-shrink-0">
                 <div className="w-44 h-44">
                   <svg className="w-44 h-44 -rotate-90" viewBox="0 0 176 176">
-                    {/* Track */}
                     <circle cx="88" cy="88" r="76" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
-                    {/* Progress */}
                     <circle
                       cx="88" cy="88" r="76"
                       fill="none"
@@ -124,7 +117,7 @@ export default function FounderIntelligencePage() {
                       strokeWidth="8"
                       strokeLinecap="round"
                       strokeDasharray={`${2 * Math.PI * 76}`}
-                      strokeDashoffset={`${2 * Math.PI * 76 * (1 - founderDNA.overallScore / 100)}`}
+                      strokeDashoffset={loading ? `${2 * Math.PI * 76}` : `${2 * Math.PI * 76 * (1 - dna.overallScore / 100)}`}
                       style={{ filter: 'drop-shadow(0 0 8px rgba(212,175,55,0.6))', transition: 'stroke-dashoffset 1.5s ease' }}
                     />
                     <defs>
@@ -135,8 +128,14 @@ export default function FounderIntelligencePage() {
                     </defs>
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-4xl font-black text-white leading-none">{founderDNA.overallScore}</span>
-                    <span className="text-sm text-slate-400 mt-1">/ 100</span>
+                    {loading ? (
+                      <div className="w-6 h-6 rounded-full border-2 border-[rgba(212,175,55,0.3)] border-t-[#D4AF37] animate-spin" />
+                    ) : (
+                      <>
+                        <span className="text-4xl font-black text-white leading-none">{dna.overallScore}</span>
+                        <span className="text-sm text-slate-400 mt-1">/ 100</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -147,23 +146,23 @@ export default function FounderIntelligencePage() {
                   <h2 className="text-xl font-black text-white">Your Founder DNA Score</h2>
                 </div>
                 <p className="text-slate-300 text-base mb-5">
-                  You're in the <span className="text-[#F5C542] font-bold">top 1%</span> of founders on the platform.
+                  You're in the <span className="text-[#F5C542] font-bold">top {dna.overallScore > 70 ? '1%' : '10%'}</span> of founders on the platform.
                 </p>
                 <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                   <span className="text-xs font-semibold px-3 py-1.5 rounded-xl"
                     style={{ background: 'rgba(52,211,153,0.1)', color: '#34D399', border: '1px solid rgba(52,211,153,0.2)' }}>
-                    ✦ Excellent
+                    ✦ {dna.overallScore >= 80 ? 'Excellent' : dna.overallScore >= 60 ? 'Strong' : 'Developing'}
                   </span>
                   <span className="text-xs font-semibold px-3 py-1.5 rounded-xl"
                     style={{ background: 'rgba(212,175,55,0.1)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.2)' }}>
-                    Top Performer
+                    {dna.personalityType}
                   </span>
                 </div>
               </div>
 
-              {/* Right side quick stats */}
+              {/* Trait quick stats */}
               <div className="ml-auto hidden lg:grid grid-cols-2 gap-4">
-                {founderDNA.traits.slice(0, 4).map((trait, i) => (
+                {dna.traits.slice(0, 4).map((trait, i) => (
                   <div key={trait.name} className="text-center px-5 py-3 rounded-xl"
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <div className="text-xl font-black mb-0.5" style={{ color: traitColors[i] }}>{trait.score}%</div>
@@ -177,19 +176,12 @@ export default function FounderIntelligencePage() {
 
         {/* ─── Traits + Strengths ─── */}
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Trait Analysis */}
           <motion.div custom={1} initial="hidden" animate="visible" variants={fadeUp}>
             <GlassCard className="h-full p-6">
               <CardHeader icon={Brain} title="Trait Analysis" />
               <div className="space-y-5">
-                {founderDNA.traits.map((trait, index) => (
-                  <motion.div
-                    key={trait.name}
-                    custom={index}
-                    initial="hidden"
-                    animate="visible"
-                    variants={fadeUp}
-                  >
+                {dna.traits.map((trait, index) => (
+                  <div key={trait.name}>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-slate-300">{trait.name}</span>
                       <span className="text-sm font-bold" style={{ color: traitColors[index] }}>{trait.score}%</span>
@@ -206,33 +198,25 @@ export default function FounderIntelligencePage() {
                         }}
                       />
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </GlassCard>
           </motion.div>
 
-          {/* Key Strengths */}
           <motion.div custom={2} initial="hidden" animate="visible" variants={fadeUp}>
             <GlassCard className="h-full p-6">
               <CardHeader icon={TrendingUp} title="Key Strengths" color="#34D399" />
               <div className="space-y-3">
-                {founderDNA.strengths.map((strength, index) => (
-                  <motion.div
-                    key={index}
-                    custom={index}
-                    initial="hidden"
-                    animate="visible"
-                    variants={fadeUp}
-                    className="flex items-start gap-3 p-3.5 rounded-xl"
-                    style={{ background: 'rgba(52,211,153,0.05)', border: '1px solid rgba(52,211,153,0.12)' }}
-                  >
+                {dna.strengths.map((strength, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3.5 rounded-xl"
+                    style={{ background: 'rgba(52,211,153,0.05)', border: '1px solid rgba(52,211,153,0.12)' }}>
                     <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
                       style={{ background: 'rgba(52,211,153,0.15)' }}>
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                     </div>
                     <span className="text-sm text-slate-300 leading-relaxed">{strength}</span>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </GlassCard>
@@ -241,40 +225,31 @@ export default function FounderIntelligencePage() {
 
         {/* ─── Blind Spots + Leadership Profile ─── */}
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Blind Spots */}
           <motion.div custom={3} initial="hidden" animate="visible" variants={fadeUp}>
             <GlassCard className="h-full p-6">
               <CardHeader icon={AlertTriangle} title="Blind Spots" color="#F97316" />
               <div className="space-y-3">
-                {founderDNA.blindSpots.map((blindSpot, index) => (
-                  <motion.div
-                    key={index}
-                    custom={index}
-                    initial="hidden"
-                    animate="visible"
-                    variants={fadeUp}
-                    className="flex items-start gap-3 p-3.5 rounded-xl"
-                    style={{ background: 'rgba(249,115,22,0.05)', border: '1px solid rgba(249,115,22,0.12)' }}
-                  >
+                {dna.blindSpots.map((blindSpot, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3.5 rounded-xl"
+                    style={{ background: 'rgba(249,115,22,0.05)', border: '1px solid rgba(249,115,22,0.12)' }}>
                     <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
                       style={{ background: 'rgba(249,115,22,0.15)' }}>
                       <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />
                     </div>
                     <span className="text-sm text-slate-300 leading-relaxed">{blindSpot}</span>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </GlassCard>
           </motion.div>
 
-          {/* Leadership Profile */}
           <motion.div custom={4} initial="hidden" animate="visible" variants={fadeUp}>
             <GlassCard className="h-full p-6">
               <CardHeader icon={Target} title="Leadership Profile" color="#A78BFA" />
               <div className="space-y-5">
                 {[
-                  { label: 'Leadership Style', value: founderDNA.leadershipStyle, color: '#60A5FA', bg: 'rgba(96,165,250,0.1)', border: 'rgba(96,165,250,0.2)' },
-                  { label: 'Personality Type', value: founderDNA.personalityType, color: '#A78BFA', bg: 'rgba(167,139,250,0.1)', border: 'rgba(167,139,250,0.2)' },
+                  { label: 'Leadership Style', value: dna.leadershipStyle, color: '#60A5FA', bg: 'rgba(96,165,250,0.1)', border: 'rgba(96,165,250,0.2)' },
+                  { label: 'Personality Type', value: dna.personalityType, color: '#A78BFA', bg: 'rgba(167,139,250,0.1)', border: 'rgba(167,139,250,0.2)' },
                 ].map(({ label, value, color, bg, border }) => (
                   <div key={label}>
                     <p className="text-xs font-semibold uppercase tracking-widest text-slate-600 mb-2">{label}</p>
@@ -288,7 +263,7 @@ export default function FounderIntelligencePage() {
                   <p className="text-xs font-semibold uppercase tracking-widest text-slate-600 mb-2">Under Stress</p>
                   <p className="text-sm text-slate-300 leading-relaxed p-3.5 rounded-xl"
                     style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    {founderDNA.stressBehavior}
+                    {dna.stressBehavior}
                   </p>
                 </div>
               </div>
@@ -298,41 +273,25 @@ export default function FounderIntelligencePage() {
 
         {/* ─── Ideal Co-founder ─── */}
         <motion.div custom={5} initial="hidden" animate="visible" variants={fadeUp}>
-          <GlassCard>
+          <GlassCard className="p-6">
             <CardHeader icon={Users} title="Ideal Co-founder Profile" />
             <div className="grid md:grid-cols-3 gap-8">
               {[
-                {
-                  label: 'Complementary Traits',
-                  items: founderDNA.idealCofounder.traits,
-                  color: '#D4AF37',
-                  bg: 'rgba(212,175,55,0.1)',
-                  border: 'rgba(212,175,55,0.2)',
-                },
-                {
-                  label: 'Required Skills',
-                  items: founderDNA.idealCofounder.skills,
-                  color: '#60A5FA',
-                  bg: 'rgba(96,165,250,0.1)',
-                  border: 'rgba(96,165,250,0.2)',
-                },
-                {
-                  label: 'Personality',
-                  items: [founderDNA.idealCofounder.personality],
-                  color: '#34D399',
-                  bg: 'rgba(52,211,153,0.1)',
-                  border: 'rgba(52,211,153,0.2)',
-                },
+                { label: 'Complementary Traits', items: dna.idealCofounder?.traits || [], color: '#D4AF37', bg: 'rgba(212,175,55,0.1)', border: 'rgba(212,175,55,0.2)' },
+                { label: 'Required Skills', items: dna.idealCofounder?.skills || [], color: '#60A5FA', bg: 'rgba(96,165,250,0.1)', border: 'rgba(96,165,250,0.2)' },
+                { label: 'Personality', items: [dna.idealCofounder?.personality || '—'], color: '#34D399', bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.2)' },
               ].map(({ label, items, color, bg, border }) => (
                 <div key={label}>
                   <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">{label}</p>
                   <div className="flex flex-wrap gap-2">
-                    {items.map((item, i) => (
+                    {items.length > 0 ? items.map((item, i) => (
                       <span key={i} className="text-xs font-medium px-3 py-1.5 rounded-lg"
                         style={{ background: bg, color, border: `1px solid ${border}` }}>
                         {item}
                       </span>
-                    ))}
+                    )) : (
+                      <span className="text-xs text-slate-600">Complete your profile to see insights</span>
+                    )}
                   </div>
                 </div>
               ))}

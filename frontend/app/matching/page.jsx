@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, X, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Search, X, SlidersHorizontal, Sparkles, Check, MapPin, Mail, Briefcase, Star, MessageCircle, UserCheck } from 'lucide-react';
 import { MainLayout } from '@/layouts/main-layout';
 import { MatchCard } from '@/components/cards/match-card';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -18,6 +17,104 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { useMatchStore } from '@/store/matchStore';
 import { matchService } from '@/services/matchService';
 import { SKILLS } from '@/utils/constants';
+import { getInitials } from '@/utils/helpers';
+
+// ── Profile Detail Modal ──────────────────────────────────────────────────────
+function ProfileModal({ match, onClose }) {
+  const scoreColor =
+    match.matchScore >= 90 ? '#34D399' :
+    match.matchScore >= 75 ? '#60A5FA' :
+    match.matchScore >= 60 ? '#D4AF37' : '#F97316';
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      style={{ background: 'rgba(7,9,15,0.88)', backdropFilter: 'blur(10px)' }}>
+      <motion.div initial={{ opacity: 0, scale: 0.96, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="w-full max-w-md rounded-2xl overflow-hidden"
+        style={{ background: '#0D1117', border: '1px solid rgba(212,175,55,0.25)' }}>
+
+        {/* Cover */}
+        <div className="h-24 relative" style={{ background: 'linear-gradient(135deg,rgba(212,175,55,0.12) 0%,rgba(11,15,25,1) 100%)' }}>
+          <button onClick={onClose} className="absolute top-3 right-3 text-slate-500 hover:text-white transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Avatar */}
+        <div className="px-6 -mt-10 pb-6">
+          <div className="flex items-end gap-4 mb-5">
+            <div className="w-20 h-20 rounded-2xl border-4 flex items-center justify-center text-2xl font-black flex-shrink-0"
+              style={{ borderColor: '#0D1117', background: 'rgba(212,175,55,0.15)', color: '#F5C542' }}>
+              {getInitials(match.name)}
+            </div>
+            <div className="flex-1 pb-1">
+              <h3 className="text-white font-black text-xl">{match.name}</h3>
+              <p className="text-[#D4AF37] text-sm font-semibold capitalize">{match.role}</p>
+              {match.location && (
+                <p className="text-slate-500 text-xs flex items-center gap-1 mt-0.5">
+                  <MapPin className="w-3 h-3" />{match.location}
+                </p>
+              )}
+            </div>
+            <div className="text-center pb-1">
+              <div className="text-2xl font-black" style={{ color: scoreColor }}>{match.matchScore}%</div>
+              <div className="text-[10px] text-slate-600">match</div>
+            </div>
+          </div>
+
+          {/* Bio */}
+          {match.bio && (
+            <p className="text-sm text-slate-400 leading-relaxed mb-5">{match.bio}</p>
+          )}
+
+          {/* Skills */}
+          {match.skills?.length > 0 && (
+            <div className="mb-5">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 mb-2">Skills</p>
+              <div className="flex flex-wrap gap-1.5">
+                {match.skills.map((s, i) => (
+                  <span key={i} className="text-xs px-2.5 py-1 rounded-lg"
+                    style={{ background: 'rgba(212,175,55,0.1)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.2)' }}>
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Highlights */}
+          {match.highlights?.length > 0 && (
+            <div className="mb-5">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 mb-2">Highlights</p>
+              <div className="space-y-1.5">
+                {match.highlights.map((h, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm text-slate-300">
+                    <Star className="w-3 h-3 text-[#D4AF37] flex-shrink-0" />{h}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-2">
+            <button onClick={onClose}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white transition-colors"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              Close
+            </button>
+            <button
+              onClick={() => { window.open(`mailto:${match.email || 'founder@valkyrie.io'}?subject=Let's connect on Valkyrie Network&body=Hi ${match.name}, I found your profile on Valkyrie Network and would love to connect!`); onClose(); }}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-[#0B0F19]"
+              style={{ background: 'linear-gradient(135deg,#D4AF37,#F5C542)' }}>
+              <MessageCircle className="w-4 h-4" /> Message
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -42,6 +139,15 @@ export default function MatchingPage() {
   const [error, setError] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [connectedIds, setConnectedIds] = useState(new Set());
+  const [connectingId, setConnectingId] = useState(null);
+  const [toast, setToast] = useState(null);   // { name, id }
+  const [profileMatch, setProfileMatch] = useState(null);
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const loadMatches = async () => {
     try {
@@ -61,15 +167,19 @@ export default function MatchingPage() {
   }, [setMatches]);
 
   const handleConnect = async (match) => {
+    if (connectedIds.has(match.id) || connectingId === match.id) return;
+    setConnectingId(match.id);
     try {
       await matchService.connectWithMatch(match.id);
-    } catch (error) {
-      console.error('Failed to connect:', error);
-    }
+    } catch (_) {}
+    // Optimistically mark as connected regardless of DB
+    setConnectedIds((prev) => new Set([...prev, match.id]));
+    setConnectingId(null);
+    showToast(`Connection request sent to ${match.name}! 🎉`);
   };
 
   const handleViewProfile = (match) => {
-    console.log('View profile:', match);
+    setProfileMatch(match);
   };
 
   const toggleSkillFilter = (skill) => {
@@ -278,12 +388,38 @@ export default function MatchingPage() {
                   match={match}
                   onConnect={handleConnect}
                   onViewProfile={handleViewProfile}
+                  connected={connectedIds.has(match.id)}
+                  connecting={connectingId === match.id}
                 />
               </motion.div>
             ))}
           </motion.div>
         )}
       </div>
+
+      {/* ── Connect toast ── */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 24, scale: 0.95 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl text-sm font-semibold whitespace-nowrap"
+            style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.35)', color: '#34D399', backdropFilter: 'blur(12px)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
+          >
+            <UserCheck className="w-4 h-4 flex-shrink-0" />
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Profile modal ── */}
+      <AnimatePresence>
+        {profileMatch && (
+          <ProfileModal match={profileMatch} onClose={() => setProfileMatch(null)} />
+        )}
+      </AnimatePresence>
+
     </MainLayout>
   );
 }

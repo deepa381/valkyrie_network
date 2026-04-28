@@ -19,8 +19,8 @@ export const NAVIGATION_LINKS = [
   { name: 'Founder Intelligence', href: '/founder-intelligence', icon: 'Brain' },
   { name: 'Matching', href: '/matching', icon: 'Users' },
   { name: 'Startups', href: '/startups', icon: 'Rocket' },
-  { name: 'Community', href: '/community', icon: 'MessageSquare', disabled: true },
-  { name: 'Analytics', href: '/analytics', icon: 'BarChart3', disabled: true },
+  { name: 'Marketplace', href: '/marketplace', icon: 'DollarSign' },
+  { name: 'Network Graph', href: '/graph', icon: 'Network' },
   { name: 'Settings', href: '/settings', icon: 'Settings' },
 ];
 

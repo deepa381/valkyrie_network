@@ -1,11 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { MapPin, Sparkles, Eye, Zap } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { MapPin, Sparkles, Eye, Check, Loader2 } from 'lucide-react';
 import { getInitials } from '@/utils/helpers';
 
-export function MatchCard({ match, onConnect, onViewProfile, className = '' }) {
+export function MatchCard({ match, onConnect, onViewProfile, connected = false, connecting = false, className = '' }) {
   const scoreColor =
     match.matchScore >= 90 ? '#34D399' :
     match.matchScore >= 75 ? '#60A5FA' :
@@ -114,10 +113,24 @@ export function MatchCard({ match, onConnect, onViewProfile, className = '' }) {
         <div className="flex gap-2 mt-auto relative z-10">
           <button
             onClick={() => onConnect(match)}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 btn-gold"
+            disabled={connected || connecting}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
+              connected ? '' : connecting ? 'opacity-80' : 'btn-gold'
+            }`}
+            style={connected ? {
+              background: 'rgba(52,211,153,0.15)',
+              border: '1px solid rgba(52,211,153,0.3)',
+              color: '#34D399',
+            } : connecting ? {
+              background: 'rgba(212,175,55,0.2)',
+              border: '1px solid rgba(212,175,55,0.3)',
+              color: '#D4AF37',
+            } : undefined}
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            Connect
+            {connecting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> :
+             connected ? <Check className="w-3.5 h-3.5" /> :
+             <Sparkles className="w-3.5 h-3.5" />}
+            {connecting ? 'Sending…' : connected ? 'Connected!' : 'Connect'}
           </button>
           <button
             onClick={() => onViewProfile(match)}

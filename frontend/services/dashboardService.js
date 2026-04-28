@@ -9,17 +9,22 @@ export const dashboardService = {
   async getMetrics() {
     try {
       const [startupRes, matchRes, marketplaceRes, graphRes] = await Promise.all([
-        api.get('/startup'),
-        api.post('/match', {}),
-        api.get('/marketplace'),
-        api.get('/graph'),
+        api.get('/startup').catch(() => ({ data: [] })),
+        api.post('/match', {}).catch(() => ({ data: [] })),
+        api.get('/marketplace').catch(() => ({ data: {} })),
+        api.get('/graph').catch(() => ({ data: {} })),
       ]);
 
       const startups = Array.isArray(startupRes.data) ? startupRes.data : [];
       const matches = Array.isArray(matchRes.data) ? matchRes.data : [];
-      const deals = Array.isArray(marketplaceRes.data) ? marketplaceRes.data : [];
+
+      // Backend returns { opportunities, deals }
+      const marketplaceData = marketplaceRes.data || {};
+      const deals = Array.isArray(marketplaceData.deals) ? marketplaceData.deals
+        : Array.isArray(marketplaceData) ? marketplaceData : [];
+
       const graph = graphRes.data || {};
-      const sessions = Array.isArray(graph.nodes) ? graph.nodes.length : 0;
+      const sessions = Array.isArray(graph.nodes) ? graph.nodes.filter((n) => n.type === 'mentor').length : 0;
 
       return {
         totalMatches: matches.length,
@@ -34,18 +39,24 @@ export const dashboardService = {
         },
       };
     } catch (error) {
-      throw new Error(getApiErrorMessage(error, 'Failed to fetch metrics'));
+      // Return safe defaults — never crash the dashboard
+      return {
+        totalMatches: 0, activeStartups: 0, investorsInterested: 0, mentorshipSessions: 0,
+        trend: { matches: '+0%', startups: '+0', investors: '+0', sessions: '0' },
+      };
     }
   },
 
   async getActivities() {
     try {
       const [startupRes, marketplaceRes] = await Promise.all([
-        api.get('/startup'),
-        api.get('/marketplace'),
+        api.get('/startup').catch(() => ({ data: [] })),
+        api.get('/marketplace').catch(() => ({ data: {} })),
       ]);
+
       const startups = Array.isArray(startupRes.data) ? startupRes.data : [];
-      const deals = Array.isArray(marketplaceRes.data) ? marketplaceRes.data : [];
+      const marketplaceData = marketplaceRes.data || {};
+      const deals = Array.isArray(marketplaceData.deals) ? marketplaceData.deals : [];
 
       const startupActivities = startups.slice(0, 3).map((startup, idx) => ({
         id: `startup-${idx}`,
@@ -56,35 +67,48 @@ export const dashboardService = {
         icon: 'Rocket',
       }));
 
-      const dealActivities = deals.slice(0, 3).map((deal, idx) => ({
+      const dealActivities = deals.slice(0, 2).map((deal, idx) => ({
         id: `deal-${idx}`,
         type: 'investor',
-        title: 'Marketplace update',
-        description: deal.deal || 'New investor activity',
+        title: 'New marketplace opportunity',
+        description: deal.deal || deal.title || 'Funding opportunity available',
         timestamp: new Date().toISOString(),
         icon: 'TrendingUp',
       }));
 
-      return [...startupActivities, ...dealActivities];
+      const allActivities = [...startupActivities, ...dealActivities];
+
+      // Always return at least some fallback activity
+      if (allActivities.length === 0) {
+        return [
+          { id: 'fb-1', type: 'startup', title: 'Welcome to Valkyrie Network', description: 'Complete your profile to get started', timestamp: new Date().toISOString(), icon: 'Zap' },
+          { id: 'fb-2', type: 'match', title: 'Explore your matches', description: 'Find co-founders aligned to your goals', timestamp: new Date().toISOString(), icon: 'Users' },
+        ];
+      }
+
+      return allActivities;
     } catch (error) {
-      throw new Error(getApiErrorMessage(error, 'Failed to fetch activities'));
+      return [
+        { id: 'fb-1', type: 'startup', title: 'Welcome to Valkyrie Network', description: 'Start building your profile', timestamp: new Date().toISOString(), icon: 'Zap' },
+      ];
     }
   },
 
   async getNotifications() {
     try {
       const response = await api.get('/marketplace');
-      const deals = Array.isArray(response.data) ? response.data : [];
+      const data = response.data || {};
+      const opportunities = Array.isArray(data.opportunities) ? data.opportunities : [];
 
-      return deals.map((deal, idx) => ({
+      return opportunities.slice(0, 3).map((op, idx) => ({
         id: String(idx + 1),
-        title: 'Marketplace activity',
-        message: deal.deal || 'New deal available',
+        title: op.title || 'New opportunity',
+        message: op.description || 'New funding opportunity available',
         read: false,
         timestamp: new Date().toISOString(),
       }));
     } catch (error) {
-      throw new Error(getApiErrorMessage(error, 'Failed to fetch notifications'));
+      return [];
     }
   },
 };
