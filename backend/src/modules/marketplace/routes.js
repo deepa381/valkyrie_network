@@ -9,7 +9,7 @@ router.get('/:userId', async (req, res) => {
     const user = await User.findById(userId).select('-passwordHash');
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const opportunities = findOpportunitiesForUser(user);
+    const opportunities = await findOpportunitiesForUser(user);
     if (!opportunities || opportunities.length === 0) return res.status(200).json({ opportunities: [], message: 'No relevant opportunities found for this profile' });
     return res.json({ opportunities });
   } catch (err) {

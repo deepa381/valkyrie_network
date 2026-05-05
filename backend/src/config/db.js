@@ -4,18 +4,29 @@ const mongoose = require('mongoose');
 mongoose.set('bufferCommands', false);
 
 const connectDB = async () => {
-  const uri = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/valkyrie_network';
+  const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+  
+  console.log('--- MongoDB Connection Debug ---');
+  console.log('MONGODB_URI defined:', !!process.env.MONGODB_URI);
+  console.log('MONGO_URI defined:', !!process.env.MONGO_URI);
+  
+  if (!uri) {
+    console.error('❌ Error: No MongoDB connection string found in process.env');
+    throw new Error('MONGODB_URI is undefined. Check your .env file placement and content.');
+  }
+
+  // Mask sensitive info for logging
+  const maskedUri = uri.replace(/:([^@]+)@/, ':****@');
+  console.log('Connecting to:', maskedUri);
+
   try {
     await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000, // fail fast
+      serverSelectionTimeoutMS: 5000,
       connectTimeoutMS: 5000,
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
     });
-    console.log('✅ MongoDB connected:', mongoose.connection.host);
+    console.log('✅ MongoDB connected successfully to:', mongoose.connection.host);
   } catch (err) {
     console.error('❌ MongoDB connection error:', err.message);
-    // Do not silently continue without DB — bubble up the error so the app fails fast
     throw err;
   }
 };

@@ -42,7 +42,7 @@ function generateDNA(user) {
   const pick = (arr, i) => arr[i % arr.length];
 
   const strengths = [pick(strengthCandidates, seed % 10), pick(strengthCandidates, (seed >> 4) % 10)].filter(Boolean);
-  const weaknesses = [pick(weaknessCandidates, (seed >> 2) % 10)].filter(Boolean);
+  const blindSpots = [pick(weaknessCandidates, (seed >> 2) % 10)].filter(Boolean);
 
   const recommendedRoles = [];
   if (overallScore > 70 && traits.find((t) => t.name === 'Vision').score > 60) recommendedRoles.push('CEO / Visionary');
@@ -50,14 +50,50 @@ function generateDNA(user) {
   if (traits.find((t) => t.name === 'Communication').score > 60) recommendedRoles.push('Head of Talent / Community');
   if (recommendedRoles.length === 0) recommendedRoles.push('Founding Team — multiple roles');
 
+  const personalityType = pick(['Visionary Builder', 'Methodical Architect', 'Agile Strategist', 'Resilient Operator'], seed % 4);
+  const leadershipStyle = pick(['Transformational', 'Servant Leadership', 'Democratic', 'Pacesetting'], (seed >> 2) % 4);
+  const stressBehavior = pick([
+    'Tends to over-analyze and delay decisions under pressure.',
+    'May become overly focused on minute details, losing sight of the big picture.',
+    'Might push the team too hard during crunch periods.',
+    'Can become defensive when faced with critical feedback during high-stress moments.'
+  ], (seed >> 5) % 4);
+
+  const idealCofounder = {
+    traits: [pick(['Detail-oriented', 'Analytical', 'Empathetic'], seed % 3), pick(['Disciplined', 'Creative', 'Patient'], (seed >> 3) % 3)],
+    skills: [pick(['Operations', 'Sales', 'Finance'], (seed >> 1) % 3), pick(['Product', 'Engineering', 'Marketing'], (seed >> 4) % 3)],
+    personality: pick(['Methodical Executor', 'Creative Disruptor', 'Steady Reliable'], (seed >> 6) % 3)
+  };
+
   return {
-    score: overallScore,
+    overallScore,
     traits,
     strengths,
-    weaknesses,
+    blindSpots,
+    personalityType,
+    leadershipStyle,
+    stressBehavior,
+    idealCofounder,
     recommendedRoles,
     seed: seed % 100,
   };
 }
 
-module.exports = { generateDNA };
+function generateTwin(user) {
+  const dna = generateDNA(user);
+  return {
+    id: `twin-${user._id}`,
+    name: `${user.name}'s Digital Twin`,
+    version: '1.0.2',
+    lastSync: new Date().toISOString(),
+    capabilities: [
+      'Strategic Planning',
+      'Team Alignment',
+      'Execution Monitoring'
+    ],
+    dnaScore: dna.overallScore,
+    status: 'online'
+  };
+}
+
+module.exports = { generateDNA, generateTwin };
