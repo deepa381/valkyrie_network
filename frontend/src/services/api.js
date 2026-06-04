@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.valkyrie.network';
+// Normalize API base so calls append /api. If NEXT_PUBLIC_API_URL provided, ensure it ends with /api
+const rawApi = process.env.NEXT_PUBLIC_API_URL || 'https://api.valkyrie.network';
+const API_BASE_URL = rawApi.replace(/\/$/, '').endsWith('/api') ? rawApi.replace(/\/$/, '') : rawApi.replace(/\/$/, '') + '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

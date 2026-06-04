@@ -10,17 +10,32 @@ const { connectDB } = require('./config/db');
 const app = express();
 const server = http.createServer(app);
 
-// Allow any localhost port in dev; use env var in production
-const corsOrigin = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL
-  : (origin, callback) => {
-      // Allow all localhost origins (any port) in development
-      if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('CORS not allowed for: ' + origin));
-      }
-    };
+// Build a flexible CORS origin checker that supports:
+// - Explicit FRONTEND_URL(s) set in environment (comma-separated)
+// - localhost on any port (dev)
+// - Vercel preview and production domains (*.vercel.app)
+const rawFrontend = process.env.FRONTEND_URL || '';
+const configuredFrontends = rawFrontend
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const isLocalhost = (origin) => !origin || /^https?:\/\/localhost(:\d+)?$/.test(origin);
+const isVercelDomain = (origin) => /https?:\/\/([a-z0-9-]+\.)?vercel\.app(:\d+)?$/.test(origin);
+
+const corsOrigin = (origin, callback) => {
+  // Allow no-origin (e.g., server-to-server requests or same-origin in some setups)
+  if (isLocalhost(origin)) return callback(null, true);
+
+  // Allow if matches any explicitly configured frontend URL
+  if (configuredFrontends.some((u) => u === origin)) return callback(null, true);
+
+  // Allow Vercel preview domains
+  if (isVercelDomain(origin)) return callback(null, true);
+
+  // Otherwise block
+  return callback(new Error('CORS not allowed for: ' + origin));
+};
 
 const io = new Server(server, {
   cors: { origin: corsOrigin, methods: ['GET', 'POST'], credentials: true },

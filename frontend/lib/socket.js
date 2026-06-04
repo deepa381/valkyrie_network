@@ -10,7 +10,8 @@ export const getSocket = () => {
 
   if (!socket) {
     // Dynamically import to avoid SSR issues
-    const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    // Remove trailing /api if present so socket connects to root server URL
+    const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '').replace(/\/$/, '') || 'http://localhost:5000';
     try {
       const { io } = require('socket.io-client');
       socket = io(socketUrl, {
