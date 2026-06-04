@@ -35,10 +35,16 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Only redirect to login if we actually have a 401 AND we're on a protected route
+    // This prevents bouncing on login/signup endpoints which may legitimately return 401
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth-storage');
-        window.location.href = '/auth/login';
+        const currentPath = window.location.pathname;
+        // Don't redirect if already on auth pages
+        if (!currentPath.startsWith('/auth/')) {
+          localStorage.removeItem('auth-storage');
+          window.location.href = '/auth/login';
+        }
       }
     }
     return Promise.reject(error);

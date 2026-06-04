@@ -1,3 +1,7 @@
+// ⚠️ DEPRECATED: This file contains DUMMY implementations for development only.
+// DO NOT USE IN PRODUCTION. Import from ../services/authService.js instead.
+// This file is kept only for reference and local testing without a backend.
+
 import api from './api';
 import { dummyUser } from '@/utils/dummyData';
 

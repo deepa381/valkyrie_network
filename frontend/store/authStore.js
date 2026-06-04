@@ -10,9 +10,9 @@ export const useAuthStore = create(
       isAuthenticated: false,
       isLoading: false,
 
-      setUser: (user) => set({ user, isAuthenticated: true }),
+      setUser: (user) => set({ user, isAuthenticated: !!user }),
 
-      setToken: (token) => set({ token }),
+      setToken: (token) => set({ token, isAuthenticated: !!token }),
 
       setRole: (role) => set({ role }),
 
@@ -20,8 +20,8 @@ export const useAuthStore = create(
         set({
           user: userData,
           token,
-          role: userData.role,
-          isAuthenticated: true,
+          role: userData?.role || 'founder',
+          isAuthenticated: !!(userData && token),
         }),
 
       logout: () =>

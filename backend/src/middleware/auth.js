@@ -3,6 +3,13 @@ const jwt = require('jsonwebtoken');
 let User = null;
 try { User = require('../models/User'); } catch (_) {}
 
+// Access in-memory store from auth routes if DB is down
+let getInMemoryUser = null;
+try {
+  const authRoutes = require('../modules/auth/routes');
+  getInMemoryUser = (userId) => authRoutes.inMemoryUsers?.get(userId);
+} catch (_) {}
+
 const requireAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -18,13 +25,31 @@ const requireAuth = async (req, res, next) => {
       return res.status(401).json({ message: 'Invalid or expired token' });
     }
 
-    // Require database-backed user for all authenticated routes
-    if (!User) return res.status(500).json({ message: 'User model not available on server' });
-    const user = await User.findById(decoded.userId).select('-passwordHash');
-    if (!user) return res.status(401).json({ message: 'User not found' });
-    req.user = user;
-    return next();
+    // CRITICAL FIX: Support both DB-backed and in-memory users
+    // First try database
+    if (User) {
+      try {
+        const user = await User.findById(decoded.userId).select('-passwordHash');
+        if (user) {
+          req.user = user;
+          return next();
+        }
+      } catch (_) {}
+    }
+
+    // Fall back to in-memory user (for testing or when DB is down)
+    if (getInMemoryUser && decoded.userId.startsWith('mem_')) {
+      const memUser = getInMemoryUser(decoded.userId);
+      if (memUser) {
+        req.user = { ...memUser, _id: memUser.id };
+        return next();
+      }
+    }
+
+    // User not found in either store
+    return res.status(401).json({ message: 'User not found' });
   } catch (err) {
+    console.error('[Auth Middleware]', err);
     return res.status(401).json({ message: 'Authentication failed' });
   }
 };

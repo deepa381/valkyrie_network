@@ -25,6 +25,9 @@ export function MainLayout({ children }) {
       persistedToken = null;
     }
 
+    // CRITICAL FIX: Do NOT redirect if persisted token exists
+    // Zustand persist middleware will hydrate on next render
+    // This prevents authenticated users being bounced back to login on page load
     if (!isAuthenticated && !token && !persistedToken) {
       router.replace('/auth/login');
     }
